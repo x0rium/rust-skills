@@ -68,6 +68,16 @@ tokio = { workspace = true, features = ["net", "io-util"] }
 tokio = { workspace = true }  # Just workspace features
 ```
 
+Features are additive: a member can add to the workspace's list but not remove from it. Since Rust 1.99, members on **edition 2024** can opt out of an inherited dependency's *default* features:
+
+```toml
+# crate-c/Cargo.toml (edition = "2024")
+[dependencies]
+serde = { workspace = true, default-features = false }  # honoured since 1.99
+```
+
+On earlier editions `default-features = false` on an inherited dependency is ignored with a warning, so set it in `[workspace.dependencies]` and let members opt back in with `features = [...]`.
+
 ## Dev and Build Dependencies
 
 ```toml

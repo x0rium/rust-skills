@@ -81,14 +81,24 @@ RwLock has overhead for tracking readers. It can be slower than Mutex when:
 
 ## Write Starvation
 
-Standard `RwLock` may starve writers if readers are continuous. `parking_lot::RwLock` is fair by default.
+`std::sync::RwLock`'s fairness policy is platform-dependent and unspecified, so continuous readers may starve writers. `parking_lot::RwLock` is writer-fair by default.
 
 ```rust
 // parking_lot is writer-fair, preventing starvation
 use parking_lot::RwLock;
+```
 
-// Or use std with explicit fairness (nightly)
-// #![feature(rwlock_downgrade)]
+To publish an update and keep reading it without letting another writer slip in between, atomically downgrade the write guard (`RwLockWriteGuard::downgrade`, stable since Rust 1.92):
+
+```rust
+use std::sync::{RwLock, RwLockWriteGuard};
+
+fn refresh_and_read(lock: &RwLock<Vec<u32>>) -> usize {
+    let mut w = lock.write().unwrap();
+    w.push(42);
+    let r = RwLockWriteGuard::downgrade(w); // now a read guard, no gap
+    r.len()
+}
 ```
 
 ## Real-World Pattern: Cached Computation

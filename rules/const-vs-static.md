@@ -12,7 +12,8 @@
 // large table as `const` — potentially duplicated at every use site
 const LOOKUP: [u8; 256] = [0u8; 256];
 
-// `static mut` — unsafe to read and a hard error in edition 2024
+// `static mut` — every access is `unsafe`; taking a reference to it is
+// denied by default in edition 2024 (`static_mut_refs`)
 static mut COUNTER: u64 = 0;
 
 // `static` for a tiny value — needlessly takes an address

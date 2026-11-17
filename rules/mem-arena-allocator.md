@@ -137,6 +137,26 @@ fn process<'a>(arena: &'a Bump, input: &str) -> Vec<'a, String<'a>> {
 }
 ```
 
+## Standard `Allocator` API (Rust 1.100+)
+
+Since Rust 1.100 the `std::alloc::Allocator` trait is stable, along with allocator-parameterized constructors such as `Vec::new_in`, `Vec::with_capacity_in`, and `Box::new_in`. Write allocator-generic code against the std trait so callers can plug in an arena:
+
+```rust
+use std::alloc::{Allocator, Global};
+
+fn collect_evens<A: Allocator>(input: &[u32], alloc: A) -> Vec<u32, A> {
+    let mut out = Vec::with_capacity_in(input.len(), alloc);
+    out.extend(input.iter().copied().filter(|n| n % 2 == 0));
+    out
+}
+
+fn demo() -> usize {
+    collect_evens(&[1, 2, 3, 4], Global).len()
+}
+```
+
+Ecosystem caveat: as of bumpalo 3.20, its `allocator_api` feature still enables `#![feature(allocator_api)]` and **fails to compile on stable**. Until your arena crate supports the stabilized trait, keep using `bumpalo::collections` (above) or the `allocator-api2` compatibility layer.
+
 ## When to Use Arenas
 
 | Situation | Use Arena? |

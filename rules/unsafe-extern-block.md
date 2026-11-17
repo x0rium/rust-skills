@@ -14,8 +14,8 @@ This change makes FFI boundaries auditable at a glance and lets wrappers expose 
 // Rust 2021 style — compiles but forbidden in 2024 edition
 extern "C" {
     fn strlen(s: *const std::ffi::c_char) -> usize;
-    fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8;
-    static errno: std::ffi::c_int;
+    fn memcpy(dst: *mut std::ffi::c_void, src: *const std::ffi::c_void, n: usize) -> *mut std::ffi::c_void;
+    static lib_debug_level: std::ffi::c_int;
 }
 ```
 
@@ -23,24 +23,32 @@ extern "C" {
 
 ```rust
 // Rust 2024 style
+use std::ffi::{c_char, c_int, c_void};
+
 unsafe extern "C" {
     // `strlen` is genuinely unsafe: caller must pass a null-terminated pointer.
-    pub unsafe fn strlen(s: *const std::ffi::c_char) -> usize;
+    pub unsafe fn strlen(s: *const c_char) -> usize;
 
     // `memcpy` is unsafe: caller must ensure non-overlapping, valid regions.
-    pub unsafe fn memcpy(dst: *mut u8, src: *const u8, n: usize) -> *mut u8;
+    // Match the C signature exactly (`void *`), or rustc 1.98+ warns
+    // (`suspicious_runtime_symbol_definitions`).
+    pub unsafe fn memcpy(dst: *mut c_void, src: *const c_void, n: usize) -> *mut c_void;
 
     // A function that is always safe to call (hypothetical pure query).
     pub safe fn rust_version_major() -> u32;
 
-    // Statics are unsafe to access unless you can guarantee no data races.
-    pub unsafe static errno: std::ffi::c_int;
+    // Statics are unsafe to access unless you can guarantee no data races
+    // (hypothetical global exported by the C library).
+    pub unsafe static lib_debug_level: c_int;
 }
 
-// Call sites remain unchanged for `unsafe` items:
-fn copy_bytes(dst: *mut u8, src: *const u8, n: usize) {
-    // SAFETY: dst and src are non-overlapping, both valid for n bytes.
-    unsafe { memcpy(dst, src, n) };
+// Call sites remain unchanged for `unsafe` items. Wrap them in a safe API
+// whose types make the preconditions impossible to violate:
+fn copy_bytes(dst: &mut [u8], src: &[u8]) {
+    assert!(dst.len() >= src.len(), "destination too small");
+    // SAFETY: both pointers come from live slices valid for `src.len()` bytes,
+    // and `&mut` / `&` borrows of distinct slices cannot overlap.
+    unsafe { memcpy(dst.as_mut_ptr().cast(), src.as_ptr().cast(), src.len()) };
 }
 
 // Call sites for `safe` items need no unsafe block:

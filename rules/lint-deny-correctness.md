@@ -99,6 +99,10 @@ cargo clippy -- -W clippy::correctness
 
 # In CI (fail on warnings)
 cargo clippy -- -D warnings -D clippy::correctness
+
+# Rust 1.97+: let Cargo fail on warnings (or set `[build] warnings = "deny"`
+# in .cargo/config.toml) instead of passing rustc flags
+CARGO_BUILD_WARNINGS=deny cargo clippy
 ```
 
 ## See Also

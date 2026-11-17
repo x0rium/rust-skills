@@ -129,6 +129,22 @@ writeln!(&mut output, "Line 2: {}", value2).unwrap();
 write!(&mut output, "Line 1: {}\n", value1).unwrap();
 ```
 
+## Integers Without the Formatting Machinery
+
+To turn an integer into text on a hot path, skip `to_string()` / `write!` entirely: `format_into` (Rust 1.98+) renders into a stack-allocated `NumBuffer` and returns a `&str` — no heap allocation and no `fmt::Formatter` dispatch. It replaces the common use of the `itoa` crate:
+
+```rust
+use std::fmt::NumBuffer; // in `std` since 1.99; `core::fmt::NumBuffer` since 1.98
+
+fn append_ids(ids: &[u64], out: &mut String) {
+    let mut buf = NumBuffer::new();
+    for &id in ids {
+        out.push_str(id.format_into(&mut buf));
+        out.push(',');
+    }
+}
+```
+
 ## When format! Is Fine
 
 ```rust

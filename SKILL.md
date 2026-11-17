@@ -10,7 +10,7 @@ description: >
 license: MIT
 metadata:
   author: leonardomso
-  version: "1.5.1"
+  version: "1.6.0"
   sources:
     - Rust API Guidelines
     - Rust Performance Book
@@ -21,7 +21,7 @@ metadata:
 
 # Rust Best Practices
 
-Comprehensive guide for writing high-quality, idiomatic, and highly optimized Rust code. Contains 265 rules across 26 categories, prioritized by impact to guide LLMs in code generation and refactoring. Current for Rust 1.96 (2024 edition).
+Comprehensive guide for writing high-quality, idiomatic, and highly optimized Rust code. Contains 265 rules across 26 categories, prioritized by impact to guide LLMs in code generation and refactoring. Current for Rust 1.100 (2024 edition).
 
 ## When to Apply
 

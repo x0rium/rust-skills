@@ -73,9 +73,11 @@ fn process_fast(data: &[u8]) -> u64 {
     }
 }
 
+// Since Rust 1.86 `#[target_feature]` works on *safe* fns: calling it from
+// code without AVX2 enabled still needs `unsafe`, but its body is safe code.
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
-unsafe fn process_avx2(data: &[u8]) -> u64 {
+fn process_avx2(data: &[u8]) -> u64 {
     // an AVX2-optimized path would go here; delegate to the scalar version
     process_generic(data)
 }

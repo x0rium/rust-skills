@@ -86,7 +86,7 @@ let n = 3.14_f64 as i32;  // May want .round() first
 ## Example Catches
 
 ```rust
-// Caught: Suspicious double negation
+// Caught: Suspicious double negation (rustc itself warns too since 1.86: `double_negations`)
 let value = --x;  // In Rust, this is -(-x), not pre-decrement
 
 // Caught: Suspicious modulo

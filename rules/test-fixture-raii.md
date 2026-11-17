@@ -128,7 +128,31 @@ impl Drop for TestTransaction<'_> {
 }
 ```
 
+## `std::mem::DropGuard` (Rust 1.100+)
+
+For one-off cleanup you no longer need a custom `Drop` type or an extra crate. `DropGuard` owns a value and runs a closure on it when the guard goes out of scope — including during a panic. It derefs to the inner value, and `DropGuard::dismiss` cancels the cleanup and hands the value back:
+
+```rust
+use std::mem::DropGuard;
+
+#[test]
+fn test_with_drop_guard() {
+    let path = std::env::temp_dir().join("drop_guard_test.txt");
+    std::fs::write(&path, "data").unwrap();
+
+    let path = DropGuard::new(path, |p| {
+        let _ = std::fs::remove_file(p);
+    });
+
+    // `path` derefs to `PathBuf`
+    assert_eq!(std::fs::read_to_string(&*path).unwrap(), "data");
+    // file removed when `path` drops, even if an assertion panics
+}
+```
+
 ## scopeguard Crate
+
+On a pre-1.100 MSRV, the `scopeguard` crate provides the same behaviour:
 
 ```rust
 use scopeguard::defer;

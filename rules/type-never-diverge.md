@@ -128,23 +128,25 @@ std::thread::spawn(|| -> ! {
 
 ## Stability Notes
 
-`fn f() -> !` (never type as a return type) has been **stable since Rust 1.41** — no feature gate needed.
+`fn f() -> !` (never type as a return type) has been stable since Rust 1.0.
 
-Using `!` as an *arbitrary type argument* (e.g. `Result<(), !>`) still requires the nightly feature gate:
-
-```rust
-// Nightly only — using ! as a type argument
-#![feature(never_type)]
-
-type NeverResult = Result<(), !>;  // Can never be Err
-```
-
-On stable Rust, use `std::convert::Infallible` as the conventional substitute:
+Since **Rust 1.100** the never type is fully stable: `!` can be used anywhere a type can — as a type argument, in a `let` annotation, in a struct field. Use `Result<T, !>` for an operation that structurally cannot fail; because the `Err` variant is uninhabited, the pattern `Ok(v)` is irrefutable and no `unwrap()` is needed:
 
 ```rust
-// Stable: Infallible is the standard stand-in for !
-type StableNeverResult = Result<(), std::convert::Infallible>;
+// Stable since 1.100: ! as a type argument
+fn parse_lenient(s: &str) -> Result<usize, !> {
+    Ok(s.trim().len())
+}
+
+fn use_it() -> usize {
+    let Ok(n) = parse_lenient(" abc ");  // irrefutable — Err(!) can't exist
+    n
+}
 ```
+
+`std::convert::Infallible` is now a type alias for `!`, so existing code that uses `Infallible` (e.g. `impl FromStr` with `type Err = Infallible`) keeps working unchanged. In new code, write `!` directly; keep `Infallible` only if your MSRV is below 1.100.
+
+**Compatibility note (1.100):** never-type fallback now resolves to `!` on all editions (previously `()` before the 2024 edition). Code where an unconstrained diverging expression silently became `()` — e.g. `let x = panic!(); x.method()` or `?`/`return` feeding into a generic call — may now fail to compile; add an explicit type annotation.
 
 ## See Also
 

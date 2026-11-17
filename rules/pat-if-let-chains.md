@@ -71,6 +71,25 @@ fn effective_timeout(cfg: &Config) -> Option<u64> {
 }
 ```
 
+## `if let` Guards on Match Arms (Rust 1.95+)
+
+The same idea works inside `match`: an arm guard can bind with `if let`, so a refinement that needs a fallible step doesn't force a nested `match` in the arm body. If the guard's pattern fails, matching falls through to the next arm:
+
+```rust
+enum Command {
+    SetPort(String),
+    Reset,
+}
+
+fn apply(cmd: &Command) -> Option<u16> {
+    match cmd {
+        Command::SetPort(raw) if let Ok(port) = raw.parse::<u16>() => Some(port),
+        Command::SetPort(_) => None, // unparsable port
+        Command::Reset => Some(8080),
+    }
+}
+```
+
 ## When to Prefer `let ... else`
 
 Use `let ... else` when the goal is early return on failure; use if-let chains when you have a richer condition that combines multiple optional bindings with a positive body to execute.

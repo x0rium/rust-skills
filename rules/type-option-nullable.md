@@ -63,6 +63,10 @@ let upper_name = find_user(id)
 let user = find_user(id).unwrap_or_default();
 let user = find_user(id).unwrap_or_else(|| User::guest());
 
+// Map, or fall back to the default — Rust 1.98+
+// (replaces `.map(f).unwrap_or_default()` and `.map_or(0, f)`)
+let name_len = find_user(id).map_or_default(|u| u.name.len());
+
 // ? operator for propagation
 fn get_user_email(id: u64) -> Option<String> {
     let user = find_user(id)?;

@@ -142,11 +142,29 @@ jobs:
           components: clippy
       
       - name: Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-targets
+        env:
+          # Rust 1.97+: Cargo fails the build if workspace crates emit
+          # warnings. Unlike `RUSTFLAGS=-Dwarnings` it doesn't change rustc
+          # flags, so toggling it doesn't force a full rebuild.
+          CARGO_BUILD_WARNINGS: deny
       
       - name: Rustdoc
         run: RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
 ```
+
+The same setting can live in `.cargo/config.toml` as `[build] warnings = "deny"`. On a toolchain older than 1.97, fall back to `cargo clippy -- -D warnings`.
+
+## Cargo Lints (Rust 1.100+)
+
+Cargo has its own lint table for manifest-level problems. The most useful one is a built-in unused-dependency check, which replaces external tools like `cargo-udeps` / `cargo-machete` for the common case:
+
+```toml
+[workspace.lints.cargo]
+unused_dependencies = "warn"
+```
+
+Member crates pick it up through the same `[lints] workspace = true` as the `rust` and `clippy` tables.
 
 ## Lint Categories
 

@@ -110,20 +110,34 @@ fn blend_images(a: &[u8], b: &[u8], alpha: f32, out: &mut [u8]) {
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
+// Safe fn + `#[target_feature]` (Rust 1.86+). Inside it, intrinsics without
+// pointer arguments are safe to call (Rust 1.87+); only loads/stores need `unsafe`.
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
-unsafe fn sum_avx2(data: &[f32]) -> f32 {
+fn sum_avx2(data: &[f32]) -> f32 {
     let mut acc = _mm256_setzero_ps();
     let mut chunks = data.chunks_exact(8);
     for chunk in &mut chunks {
-        let v = _mm256_loadu_ps(chunk.as_ptr());
+        // SAFETY: `chunk` holds exactly 8 `f32`s — one in-bounds unaligned load.
+        let v = unsafe { _mm256_loadu_ps(chunk.as_ptr()) };
         acc = _mm256_add_ps(acc, v);
     }
 
     // store the 8 lanes, then finish the reduction (and the remainder) in scalar
     let mut lanes = [0.0f32; 8];
-    _mm256_storeu_ps(lanes.as_mut_ptr(), acc);
+    // SAFETY: `lanes` holds exactly 8 `f32`s — one in-bounds unaligned store.
+    unsafe { _mm256_storeu_ps(lanes.as_mut_ptr(), acc) };
     lanes.iter().sum::<f32>() + chunks.remainder().iter().sum::<f32>()
+}
+
+#[cfg(target_arch = "x86_64")]
+fn sum(data: &[f32]) -> f32 {
+    if is_x86_feature_detected!("avx2") {
+        // SAFETY: AVX2 support was verified at runtime just above.
+        unsafe { sum_avx2(data) }
+    } else {
+        data.iter().sum()
+    }
 }
 ```
 

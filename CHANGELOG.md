@@ -4,6 +4,40 @@ All notable changes to this skill are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and the project aims to follow
 semantic versioning for the rule set.
 
+## [1.6.0]
+
+### Changed
+- Refreshed for **Rust 1.100** (was 1.96); compile-check harness and CI now
+  pinned to 1.100.0, baseline regenerated.
+- `type-never-diverge`: the never type `!` is fully stable (1.100);
+  `Infallible` is now an alias for `!`; never-type fallback note.
+- `mem-arena-allocator`: stable `std::alloc::Allocator` / `Vec::new_in` (1.100),
+  with the caveat that bumpalo's `allocator_api` feature still needs nightly.
+- `test-fixture-raii`: `std::mem::DropGuard` (1.100) as the std alternative to
+  `scopeguard`.
+- `lint-workspace-lints`, `lint-deny-correctness`: `build.warnings = "deny"`
+  (1.97) instead of `-D warnings`; `[lints.cargo] unused_dependencies` (1.100).
+- `conc-thread-local`: `LocalKey<Cell<T>>::update` (1.99), `const { }` init.
+- `mem-write-over-format`: allocation-free integer formatting with
+  `NumBuffer` / `format_into` (1.98/1.99).
+- `pat-if-let-chains`: `if let` guards on match arms (1.95).
+- `num-nonzero`, `type-option-nullable`, `proj-workspace-deps`: `from_str_radix`,
+  `NonZero` ranges, `map_or_default`, edition-2024 `default-features` override.
+- `opt-simd-portable`, `opt-target-cpu`: `#[target_feature]` on safe fns (1.86)
+  and safe non-pointer intrinsics (1.87).
+
+### Fixed
+- `own-rwlock-readers`: `RwLockWriteGuard::downgrade` is stable (1.92), not
+  nightly, and is unrelated to fairness.
+- `unsafe-minimize-scope`, `conc-thread-local`, `const-vs-static`: corrected
+  edition-2024 severities — `unsafe_op_in_unsafe_fn` is warn-by-default and
+  `static_mut_refs` is deny-by-default (neither is a hard error).
+- `doc-safety-section`, `opt-simd-portable`: unsafe operations inside
+  `unsafe fn` now use explicit `unsafe {}` blocks with `SAFETY:` comments.
+- `unsafe-extern-block`: `memcpy` declared with its real C signature (rustc
+  1.98+ warns otherwise); the "Good" wrapper takes slices instead of raw
+  pointers, so it's sound; removed the misleading `errno` static.
+
 ## [1.5.1]
 
 ### Changed
